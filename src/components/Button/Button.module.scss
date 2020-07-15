@@ -1,0 +1,12 @@
+@import "../../styles/base";
+
+.Button {
+  color: $white;
+  background-color: $blue;
+  border: none;
+  padding: 20px 45px;
+  font-family: inherit;
+  font-size: 26px;
+  cursor: pointer;
+  text-decoration: none;
+}

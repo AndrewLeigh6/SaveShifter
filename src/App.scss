@@ -1,0 +1,21 @@
+@import "styles/base";
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+  font-size: calc(10px + 2vmin);
+  background-color: $grey;
+  color: $white;
+  font-family: $font;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 50px;
+}
+
+.Container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
