@@ -21,16 +21,3 @@ export function fromAuthCode(authCode) {
 
   return requester;
 }
-
-// try {
-//   const saved = await requester.getMe().getSavedContent();
-//   setSavedPosts(saved);
-// } catch (error) {
-//   console.log(error);
-// }
-// try {
-//   const unsaved = await requester.getSubmission("hkbuko").unsave();
-//   console.log(unsaved);
-// } catch (error) {
-//   console.log(error);
-//

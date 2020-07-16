@@ -22,7 +22,7 @@ const Posts = (props) => {
     if (props.posts.length !== 0) {
       return (
         <React.Fragment>
-          <h3> Here are your saved posts</h3>
+          <h3> {props.username}, here are your saved posts</h3>
           <div className={classes.PostsList}>{posts}</div>
         </React.Fragment>
       );
@@ -31,10 +31,7 @@ const Posts = (props) => {
   };
 
   const renderLoading = () => {
-    const length = props.posts.length;
-    const code = new URL(window.location.href).searchParams.get("code");
-
-    if (length === 0 && code != null) {
+    if (props.isLoading) {
       return <p>Loading...</p>;
     }
 
