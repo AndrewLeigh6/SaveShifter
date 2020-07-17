@@ -21,3 +21,16 @@ export function fromAuthCode(authCode) {
 
   return requester;
 }
+
+export async function savePost(requester, postId, index, totalPosts) {
+  try {
+    console.log("saving post:", postId);
+    //await requester.getSubmission(postId).save();
+    //await requester.getSubmission(postId).unsave();
+    console.log("saved post:", postId);
+    console.log("index is", index);
+    console.log("total length is", totalPosts);
+  } catch (error) {
+    console.log(error);
+  }
+}

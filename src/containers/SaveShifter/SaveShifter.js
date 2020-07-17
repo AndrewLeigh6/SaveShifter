@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 
-import { getAuthUrl, fromAuthCode } from "../../helpers/helpers";
+import { getAuthUrl, fromAuthCode, savePost } from "../../helpers/helpers";
 
 import Posts from "../../components/Posts/Posts";
 import Button from "../../components/Button/Button.js";
+
+import classes from "./SaveShifter.module.scss";
 
 // optionally unsave posts from the original account
 
@@ -24,6 +26,8 @@ const SaveShifter = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [requester, setRequester] = useState(null);
   const [username, setUsername] = useState("User");
+  const [postsSaved, setPostsSaved] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   // handle creating a snoowrap requester on initial page load
   useEffect(() => {
@@ -57,6 +61,7 @@ const SaveShifter = () => {
           console.log(savedPosts);
           setSavedPosts(savedPosts);
           setUsername(requester._ownUserInfo.name);
+          setIsLoading(false);
         } catch (error) {
           console.log(error);
         }
@@ -74,7 +79,6 @@ const SaveShifter = () => {
           (post) => post.over_18 === false
         );
         setfilteredPosts(filteredPosts);
-        setIsLoading(false);
         console.log(filteredPosts);
       }
     };
@@ -124,21 +128,22 @@ const SaveShifter = () => {
   };
 
   const copySavedPostsHandler = () => {
+    if (isSaving) {
+      return false;
+    }
+
     if (requester != null) {
+      // we save once every two seconds to avoid hitting the reddit api request limit
       const delayedSave = async (postId, index) => {
+        let totalPosts = filteredPostIds.length;
         setTimeout(async () => {
-          try {
-            console.log("saving post:", postId);
-            await requester.getSubmission(postId).save();
-            //await requester.getSubmission(postId).unsave();
-            console.log("saved post:", postId);
-          } catch (error) {
-            console.log(error);
-          }
+          savePost(requester, postId, index, totalPosts);
+          setPostsSaved((postsSaved) => postsSaved + 1);
         }, 2000 * index);
       };
 
       var index = 0;
+      setIsSaving(true);
 
       // we reverse so the most recent post is saved last, and therefore appears on top
       for (var postId of filteredPostIds.reverse()) {
@@ -148,6 +153,7 @@ const SaveShifter = () => {
     }
   };
 
+  // step 1
   const renderGetSavedPosts = () => {
     if (
       savedPosts.length === 0 &&
@@ -162,6 +168,7 @@ const SaveShifter = () => {
     }
   };
 
+  // step 2
   const renderGoLogOut = () => {
     if (
       filteredPostIds.length !== 0 &&
@@ -186,6 +193,7 @@ const SaveShifter = () => {
     }
   };
 
+  // step 3
   const renderAuthSecondAccount = () => {
     if (authingSecondAccount) {
       return (
@@ -198,11 +206,12 @@ const SaveShifter = () => {
     }
   };
 
+  // step 4
   const renderCopySavedPosts = () => {
     if (secondAccountAuthed) {
       return (
         <React.Fragment>
-          <Button clicked={() => copySavedPostsHandler()}>
+          <Button clicked={() => copySavedPostsHandler()} disabled={isSaving}>
             4. Begin saving posts to second account
           </Button>
           <p>
@@ -210,13 +219,21 @@ const SaveShifter = () => {
             requests per minute. This means we can only save one post every 2
             seconds.
           </p>
+          <p>
+            {" "}
+            Posts saved: {postsSaved} / {filteredPostIds.length}
+          </p>
+          {postsSaved == filteredPostIds.length ? (
+            <p> Saving complete!</p>
+          ) : null}
         </React.Fragment>
       );
     }
   };
+
   return (
-    <div className="SaveShifter">
-      <div className="Container">
+    <div className={classes.SaveShifter}>
+      <div className={classes.Container}>
         {renderGetSavedPosts()}
         {renderGoLogOut()}
         {renderAuthSecondAccount()}

@@ -9,6 +9,7 @@ const Button = (props) => {
       rel="noopener noreferrer"
       className={classes.Button}
       onClick={props.clicked}
+      disabled={props.disabled}
     >
       <div>{props.children}</div>
     </a>
