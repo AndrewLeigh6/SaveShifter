@@ -3,7 +3,7 @@ import classes from "./Posts.module.css";
 
 const Posts = (props) => {
   const posts = props.posts.map((post) => {
-    if (post.thumbnail.includes("https")) {
+    if (post.thumbnail && post.thumbnail.includes("https")) {
       return (
         <React.Fragment key={post.id}>
           <div className={classes.Thumbnail}>

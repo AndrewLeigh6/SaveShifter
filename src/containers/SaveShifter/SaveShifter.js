@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 
-import { getAuthUrl, fromAuthCode, savePost } from "../../helpers/helpers";
+import {
+  getAuthUrl,
+  fromAuthCode,
+  savePost,
+  unsavePost,
+  fromRefreshToken,
+} from "../../helpers/helpers";
 
 import Posts from "../../components/Posts/Posts";
 import Button from "../../components/Button/Button.js";
@@ -22,10 +28,12 @@ const SaveShifter = () => {
   const [secondAccountAuthed, setSecondAccountAuthed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUnsaving, setIsUnsaving] = useState(false);
 
   // misc
   const [username, setUsername] = useState("User");
   const [postsSaved, setPostsSaved] = useState(0);
+  const [postsUnsaved, setPostsUnsaved] = useState(0);
 
   // handle creating a snoowrap requester on initial page load
   useEffect(() => {
@@ -52,10 +60,7 @@ const SaveShifter = () => {
     const getSavedPosts = async () => {
       if (requester !== null) {
         try {
-          var savedPosts = await requester
-            .getMe()
-            .getSavedContent()
-            .fetchMore(1);
+          var savedPosts = await requester.getMe().getSavedContent().fetchAll();
           console.log(savedPosts);
           setSavedPosts(savedPosts);
           setUsername(requester._ownUserInfo.name);
@@ -74,7 +79,7 @@ const SaveShifter = () => {
     const filterPosts = () => {
       if (savedPosts.length !== 0) {
         const filteredPosts = savedPosts.filter(
-          (post) => post.over_18 === false
+          (post) => post.over_18 === true
         );
         setfilteredPosts(filteredPosts);
         console.log(filteredPosts);
@@ -111,6 +116,7 @@ const SaveShifter = () => {
       if (code === null) {
         localStorage.removeItem("filteredPostIds");
         localStorage.removeItem("secondAccountAuthed");
+        localStorage.removeItem("accessToken");
       }
     };
 
@@ -125,6 +131,10 @@ const SaveShifter = () => {
   const authSecondAccountHandler = () => {
     localStorage.setItem("filteredPostIds", filteredPostIds);
     localStorage.setItem("secondAccountAuthed", true);
+
+    // we'll need this token to un-save posts later on
+    localStorage.setItem("refreshToken", requester.refreshToken);
+
     authRedirectHandler();
   };
 
@@ -146,10 +156,35 @@ const SaveShifter = () => {
       var index = 0;
       setIsSaving(true);
 
-      // we reverse so the most recent post is saved last, and therefore appears on top
       for (var postId of filteredPostIds.reverse()) {
         index = index + 1;
         delayedSave(postId, index);
+      }
+    }
+  };
+
+  const removeSavedPostsHandler = async () => {
+    console.log("clicked");
+    // get our original requester so we don't need to re-auth the first account
+    const refreshToken = localStorage.getItem("refreshToken");
+    await setFirstAccountRequester(await fromRefreshToken(refreshToken));
+
+    if (firstAccountRequester !== null) {
+      // unsave one post every two seconds to avoid hitting the reddit api request limit
+      const delayedUnsave = async (postId, index) => {
+        let totalPosts = filteredPostIds.length;
+        setTimeout(async () => {
+          unsavePost(firstAccountRequester, postId, index, totalPosts);
+          setPostsUnsaved((postsUnsaved) => postsUnsaved + 1);
+        }, 2000 * index);
+      };
+
+      var index = 0;
+      setIsUnsaving(true);
+
+      for (var postId of filteredPostIds.reverse()) {
+        index = index + 1;
+        delayedUnsave(postId, index);
       }
     }
   };
@@ -199,7 +234,7 @@ const SaveShifter = () => {
     if (authingSecondAccount) {
       return (
         <React.Fragment>
-          <Button clicked={() => authSecondAccountHandler()}>
+          <Button clicked={authSecondAccountHandler}>
             3. Authorize second account
           </Button>
         </React.Fragment>
@@ -209,10 +244,19 @@ const SaveShifter = () => {
 
   // step 4
   const renderCopySavedPosts = () => {
-    if (secondAccountAuthed) {
+    const savingPosts = (
+      <React.Fragment>
+        <p> Saving posts...</p>
+        <p>
+          Posts saved: {postsSaved} / {filteredPostIds.length}
+        </p>
+      </React.Fragment>
+    );
+
+    if (secondAccountAuthed & (postsSaved !== filteredPostIds.length)) {
       return (
         <React.Fragment>
-          <Button clicked={() => copySavedPostsHandler()} disabled={isSaving}>
+          <Button clicked={copySavedPostsHandler} disabled={isSaving}>
             4. Begin saving posts to second account
           </Button>
           <p>
@@ -220,27 +264,39 @@ const SaveShifter = () => {
             requests per minute. This means we can only save one post every 2
             seconds.
           </p>
-          <p>
-            {" "}
-            Posts saved: {postsSaved} / {filteredPostIds.length}
-          </p>
-          {postsSaved == filteredPostIds.length ? (
-            <div>
-              <p> Saving complete!</p>
-              <p>
-                {" "}
-                If you just wanted to copy your posts, you're done! However, if
-                you want to remove the posts from your original account, please
-                click the button above to proceed
-              </p>
-            </div>
-          ) : null}
+          {isSaving ? savingPosts : null}
         </React.Fragment>
       );
     }
   };
 
-  const removePostsFromFirstAccount = () => {};
+  const renderUnsavePosts = () => {
+    const unsavingPosts = (
+      <React.Fragment>
+        <p> Removing posts...</p>
+        <p>
+          Posts removed: {postsUnsaved} / {filteredPostIds.length}
+        </p>
+      </React.Fragment>
+    );
+    if (postsSaved === filteredPostIds.length && postsSaved !== 0) {
+      return (
+        <div>
+          <Button clicked={removeSavedPostsHandler}>
+            5. Remove saved posts from original account
+          </Button>
+          <p> Saving complete!</p>
+          <p>
+            {" "}
+            If you just wanted to copy your posts, you're done! However, if you
+            want to remove the posts from your original account, please click
+            the button above to proceed
+          </p>
+          {isUnsaving ? unsavingPosts : null}
+        </div>
+      );
+    }
+  };
 
   return (
     <div className={classes.SaveShifter}>
@@ -249,6 +305,7 @@ const SaveShifter = () => {
         {renderGoLogOut()}
         {renderAuthSecondAccount()}
         {renderCopySavedPosts()}
+        {renderUnsavePosts()}
         <Posts
           posts={filteredPosts}
           isLoading={isLoading}

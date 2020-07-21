@@ -11,7 +11,7 @@ const Button = (props) => {
       onClick={props.clicked}
       disabled={props.disabled}
     >
-      <div>{props.children}</div>
+      {props.children}
     </a>
   );
 };
