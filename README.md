@@ -2,6 +2,12 @@
 
 It lets you transfer saved posts from one reddit account to another
 
+## Usage
+
+// add env stuff here
+
+If you have docker installed, you can just run ```docker-compose up```. If you have node, you can run ```npm install```, and then ```npm start```. You should be able to access the app on ```localhost:3000```.
+
 ### Todo
 
 - Add filters so you can see all your saved posts, and then filter them down to just posts from certain subs
