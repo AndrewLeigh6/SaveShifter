@@ -2,7 +2,7 @@
 
 It lets you transfer saved posts from one reddit account to another
 
-## Usage
+### Usage
 
 // add env stuff here
 
