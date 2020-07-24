@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { savePost, unsavePost, fromLogin } from "../../helpers/helpers";
+import { savePosts, unsavePosts, fromLogin } from "../../helpers/helpers";
 
 import Posts from "../../components/Posts/Posts";
 
@@ -99,61 +99,35 @@ const SaveShifter = () => {
   };
 
   const copySavedPostsHandler = () => {
-    if (isSaving) {
-      return false;
-    }
-
-    const requester = secondAccountRequester;
-
-    if (requester != null) {
-      // we save once every two seconds to avoid hitting the reddit api request limit
-      const delayedSave = async (postId, index) => {
-        let totalPosts = filteredPostIds.length;
-        setTimeout(async () => {
-          savePost(requester, postId, index, totalPosts);
-          setPostsSaved((postsSaved) => postsSaved + 1);
-        }, 2000 * index);
-      };
-
-      var index = 0;
-      setIsSaving(true);
-
-      for (var postId of filteredPostIds.reverse()) {
-        index = index + 1;
-        delayedSave(postId, index);
-      }
+    if (secondAccountRequester != null && !isSaving) {
+      savePosts(
+        secondAccountRequester,
+        filteredPostIds,
+        setIsSaving,
+        setPostsSaved
+      );
     }
   };
 
   const removeSavedPostsHandler = async () => {
-    if (isUnsaving) {
-      return false;
-    }
-
-    if (firstAccountRequester !== null) {
-      // unsave one post every two seconds to avoid hitting the reddit api request limit
-      const delayedUnsave = async (postId, index) => {
-        let totalPosts = filteredPostIds.length;
-        setTimeout(async () => {
-          unsavePost(firstAccountRequester, postId, index, totalPosts);
-          setPostsUnsaved((postsUnsaved) => postsUnsaved + 1);
-        }, 2000 * index);
-      };
-
-      var index = 0;
-      setIsUnsaving(true);
-
-      for (var postId of filteredPostIds.reverse()) {
-        index = index + 1;
-        delayedUnsave(postId, index);
-      }
+    if (firstAccountRequester !== null && !isUnsaving) {
+      unsavePosts(
+        firstAccountRequester,
+        filteredPostIds,
+        setIsUnsaving,
+        setPostsUnsaved
+      );
     }
   };
 
   return (
     <div className={classes.SaveShifter}>
       <div className={classes.Container}>
-        <Logins posts={filteredPosts} submit={loginHandler} />
+        <Logins
+          submit={loginHandler}
+          firstAccountRequester={firstAccountRequester}
+          secondAccountRequester={secondAccountRequester}
+        />
         <CopySavedPosts
           postsSaved={postsSaved}
           filteredPostIds={filteredPostIds}

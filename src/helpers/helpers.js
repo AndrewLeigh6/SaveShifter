@@ -16,29 +16,78 @@ export function fromLogin(username, password) {
   return requester;
 }
 
-export async function savePost(requester, postId, index, totalPosts) {
-  try {
-    console.log("saving post:", postId);
-    await requester.getSubmission(postId).save();
-    //await requester.getSubmission(postId).unsave();
-    console.log("saved post:", postId);
-    console.log("index is", index);
-    console.log("total length is", totalPosts);
-  } catch (error) {
-    console.log(error);
+export async function savePosts(
+  requester,
+  filteredPostIds,
+  setIsSaving,
+  setPostsSaved
+) {
+  // we save once every two seconds to avoid hitting the reddit api request limit
+  console.log("are we hitting this");
+  const delayedSave = async (postId, index) => {
+    let totalPosts = filteredPostIds.length;
+    setTimeout(async () => {
+      savePost(requester, postId, index, totalPosts);
+      setPostsSaved((postsSaved) => postsSaved + 1);
+    }, 2000 * index);
+  };
+
+  var index = 0;
+  setIsSaving(true);
+
+  for (var postId of filteredPostIds.reverse()) {
+    index = index + 1;
+    delayedSave(postId, index);
+  }
+
+  /* Helper function */
+  async function savePost(requester, postId, index, totalPosts) {
+    try {
+      console.log("saving post:", postId);
+      await requester.getSubmission(postId).save();
+      console.log("saved post:", postId);
+      console.log("index is", index);
+      console.log("total length is", totalPosts);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 
-export async function unsavePost(requester, postId, index, totalPosts) {
-  try {
-    console.log("unsaving post:", postId);
-    //await requester.getSubmission(postId).save();
-    await requester.getSubmission(postId).unsave();
-    console.log("unsaved post:", postId);
-    console.log("index is", index);
-    console.log("total length is", totalPosts);
-  } catch (error) {
-    console.log(error);
+export async function unsavePosts(
+  requester,
+  filteredPostIds,
+  setIsUnsaving,
+  setPostsUnsaved
+) {
+  // unsave one post every two seconds to avoid hitting the reddit api request limit
+  const delayedUnsave = async (postId, index) => {
+    let totalPosts = filteredPostIds.length;
+    setTimeout(async () => {
+      unsavePost(requester, postId, index, totalPosts);
+      setPostsUnsaved((postsUnsaved) => postsUnsaved + 1);
+    }, 2000 * index);
+  };
+
+  var index = 0;
+  setIsUnsaving(true);
+
+  for (var postId of filteredPostIds.reverse()) {
+    index = index + 1;
+    delayedUnsave(postId, index);
+  }
+
+  /* Helper function */
+  async function unsavePost(requester, postId, index, totalPosts) {
+    try {
+      console.log("unsaving post:", postId);
+      await requester.getSubmission(postId).unsave();
+      console.log("unsaved post:", postId);
+      console.log("index is", index);
+      console.log("total length is", totalPosts);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 

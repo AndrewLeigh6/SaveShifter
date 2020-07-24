@@ -6,19 +6,24 @@ import Login from "./Login/Login";
 const Logins = (props) => {
   return (
     <React.Fragment>
-      <Login accountNo="first" savedPosts={props.posts} submit={props.submit} />
+      <Login
+        accountNo="first"
+        submit={props.submit}
+        requester={props.firstAccountRequester}
+      />
       <Login
         accountNo="second"
-        savedPosts={props.posts}
         submit={props.submit}
+        requester={props.secondAccountRequester}
       />
     </React.Fragment>
   );
 };
 
 Logins.propTypes = {
-  posts: PropTypes.array.isRequired,
   submit: PropTypes.func.isRequired,
+  firstAccountRequester: PropTypes.object,
+  secondAccountRequester: PropTypes.object,
 };
 
 export default Logins;
